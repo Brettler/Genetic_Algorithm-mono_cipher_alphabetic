@@ -1,0 +1,9 @@
+Word Length Weighting: The count of correctly deciphered words is weighted by the length of the word.
+This will favor solutions that correctly decipher longer words, which are less likely to occur by chance.
+
+Bigram Frequencies: English language has characteristic frequencies of letter pairs (bigrams).
+By including a factor in the fitness function that compares the frequency of bigrams in the deciphered text to the known frequencies in English, we can improve the ability of the fitness function to distinguish between more and less likely solutions.
+
+Factor Weighting: The relative weights of the factors in the fitness score are adjustable.
+Here, they are set to weight word count and letter frequency equally and bigram frequency half as much,
+but these weights could be adjusted depending on what is found to work best in practice.
