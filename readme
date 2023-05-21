@@ -3,7 +3,40 @@ This will favor solutions that correctly decipher longer words, which are less l
 
 Bigram Frequencies: English language has characteristic frequencies of letter pairs (bigrams).
 By including a factor in the fitness function that compares the frequency of bigrams in the deciphered text to the known frequencies in English, we can improve the ability of the fitness function to distinguish between more and less likely solutions.
+The reason we are iterating over the entire deciphered_text and not the list_words_deciphered_text when computing bigrams is because bigrams are not just sequences of two letters within the same word, but can also be sequences of two letters that span two words.
+In English, it's important to consider letter pairs that span across words because there are common patterns at word boundaries. For example, if you have the words "to be", the bigram "o b" is significant and occurs frequently in the English language. If we only considered bigrams within individual words, we would miss this and potentially other significant patterns.
+In the case of the bigram "o b" that spans "to" and "be", by considering the entire text, the code will correctly identify this as a bigram. However, if you were to iterate over the list_words_deciphered_text instead, the bigram "o b" would not be identified because "o" and "b" are in separate words.
+Therefore, it's crucial to analyze the entire deciphered_text rather than just the list_words_deciphered_text to capture all possible bigrams, including those that span across words. This will result in a more accurate fitness score and, ultimately, a more accurate deciphered text.
+
+
 
 Factor Weighting: The relative weights of the factors in the fitness score are adjustable.
 Here, they are set to weight word count and letter frequency equally and bigram frequency half as much,
 but these weights could be adjusted depending on what is found to work best in practice.
+
+
+parent1: vxoremqkidulwhgctbjpsnfzay
+parent2: kporemjbidulwhqvtgxzsnfcay
+mapping: {'q': 'j', 'k': 'b', 'i': 'i', 'd': 'd', 'u': 'u', 'l': 'l', 'w': 'w', 'h': 'h', 'g': 'q', 'c': 'v', 't': 't', 'b': 'g', 'j': 'x', 'p': 'z', 's': 's', 'n': 'n'}
+letter in parent2: k
+b =mapping[k]
+g =mapping[b]
+q =mapping[g]
+j =mapping[q]
+x =mapping[j]
+letter in parent2: p
+z =mapping[p]
+letter in parent2: o
+letter in parent2: r
+....
+letter in parent2: c
+v =mapping[c]
+letter in parent2: a
+letter in parent2: y
+child is xzoremqkidulwhgctbjpsnfvay
+
+
+fitness_score is calculated as a weighted combination of the above metrics. A higher proportion of valid English words
+increases the score (0.4 times the proportion of characters in English words).
+More closely matching English letter frequencies and bigram frequencies also increase the score (0.2 times the corresponding frequency fitness).
+However, if the letter frequencies in the deciphered_text don't match those in English, that reduces the score (0.2 times the letter frequency fitness).
