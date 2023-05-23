@@ -2,6 +2,7 @@
 import random
 import string
 from collections import Counter
+import queue
 
 # Open the file dict.txt in read mode and load all words
 # into a set after converting them to lower case.
@@ -32,63 +33,67 @@ def init_generate_solution():
     return ''.join(random.sample(string.ascii_lowercase, len(string.ascii_lowercase)))
 
 # Fitness function: the higher the score, the closer the solution is to being correct.
-def fitness(solution, cipher_text):
+def fitness(solutions, cipher_text):
     """
-    :param solution: permutation of lowercase English letters, such that each letter coding to the real English letter.
+    :param solutions: a list of solutions. Each solution is a permutation of lowercase English letters, such that each letter coding to the real English letter.
     :param cipher_text: Input cipher text we need to decipher.
     :return:  fitness score - weighted combination of the word count fitness, letter frequency fitness,
                                 and bigram frequency fitness.
     """
-    deciphered_text = decipher(cipher_text, solution)  # Decipher the given cipher text using the provided solution.
-    word_count = 0  # number of characters in English words
-    total_count = 0  # Total number of characters in all words in the deciphered text
-    char_count = Counter(deciphered_text)  # Counts the number of occurrences of each character in the deciphered text.
-    list_words_deciphered_text = deciphered_text.split()  # Split the deciphered text into list of words.
+    fitness_scores = []
+    for solution in solutions:
+        deciphered_text = decipher(cipher_text, solution)  # Decipher the given cipher text using the provided solution.
+        word_count = 0  # number of characters in English words
+        total_count = 0  # Total number of characters in all words in the deciphered text
+        char_count = Counter(deciphered_text)  # Counts the number of occurrences of each character in the deciphered text.
+        list_words_deciphered_text = deciphered_text.split()  # Split the deciphered text into list of words.
 
-    for word in list_words_deciphered_text:  # Iterate on each word in the list.
-        if word in english_words:  # If a word is in the English words set,
-            word_count += len(word)  # increment the word count by the length of the word.
-        total_count += len(word)  # Increment the total count by the length of the word.
+        for word in list_words_deciphered_text:  # Iterate on each word in the list.
+            if word in english_words:  # If a word is in the English words set,
+                word_count += len(word)  # increment the word count by the length of the word.
+            total_count += len(word)  # Increment the total count by the length of the word.
 
-    # Calculate the letter frequency fitness by comparing the frequency of each letter in the deciphered text
-    # to the known letter frequencies in English.
-    # Initialize the letter frequency fitness score to 0
-    letter_freq_fitness = 0
-    all_letters = string.ascii_lowercase
-    # Loop over all lowercase English letters
-    for current_letter in all_letters:
-        # Get the frequency of the current letter in English, default to 0 if not found
-        english_letter_frequency = letter_frequencies.get(current_letter, 0)
-        # Get the count of the current letter in the deciphered text, default to 0 if not found
-        deciphered_letter_count = char_count.get(current_letter, 0)
-        # Calculate the frequency of the current letter in the deciphered text
-        deciphered_letter_frequency = deciphered_letter_count / len(deciphered_text)
-        # Calculate the absolute difference between the letter frequencies
-        absolute_difference = abs(english_letter_frequency - deciphered_letter_frequency)
-        # Add the absolute difference to the total letter frequency fitness score
-        letter_freq_fitness += absolute_difference
+        # Calculate the letter frequency fitness by comparing the frequency of each letter in the deciphered text
+        # to the known letter frequencies in English.
+        # Initialize the letter frequency fitness score to 0
+        letter_freq_fitness = 0
+        all_letters = string.ascii_lowercase
+        # Loop over all lowercase English letters
+        for current_letter in all_letters:
+            # Get the frequency of the current letter in English, default to 0 if not found
+            english_letter_frequency = letter_frequencies.get(current_letter, 0)
+            # Get the count of the current letter in the deciphered text, default to 0 if not found
+            deciphered_letter_count = char_count.get(current_letter, 0)
+            # Calculate the frequency of the current letter in the deciphered text
+            deciphered_letter_frequency = deciphered_letter_count / len(deciphered_text)
+            # Calculate the absolute difference between the letter frequencies
+            absolute_difference = abs(english_letter_frequency - deciphered_letter_frequency)
+            # Add the absolute difference to the total letter frequency fitness score
+            letter_freq_fitness += absolute_difference
 
-    # Calculate the pair_letters_fitness frequency fitness by comparing the frequency of each pair of letters
-    # in the deciphered text to the known pair_letters_fitness frequencies in English.
-    pair_letters_fitness = 0
-    # bigrams = [deciphered_text[i:i+2] for i in range(len(deciphered_text) - 1)]
-    bigrams = []  # Initialize an empty list to hold the bigrams.
+        # Calculate the pair_letters_fitness frequency fitness by comparing the frequency of each pair of letters
+        # in the deciphered text to the known pair_letters_fitness frequencies in English.
+        pair_letters_fitness = 0
+        # bigrams = [deciphered_text[i:i+2] for i in range(len(deciphered_text) - 1)]
+        bigrams = []  # Initialize an empty list to hold the bigrams.
 
-    # Loop over the indices of the deciphered_text, stopping one before the end.
-    for i in range(len(deciphered_text) - 1):
-        # Take the current character and the next character.
-        bigram = deciphered_text[i:i + 2]
+        # Loop over the indices of the deciphered_text, stopping one before the end.
+        for i in range(len(deciphered_text) - 1):
+            # Take the current character and the next character.
+            bigram = deciphered_text[i:i + 2]
 
-        # Add this pair of characters to the list.
-        bigrams.append(bigram)
+            # Add this pair of characters to the list.
+            bigrams.append(bigram)
 
-    for bigram in bigrams:
-        if bigram in letter_pair_frequencies:
-            pair_letters_fitness += letter_pair_frequencies[bigram]
+        for bigram in bigrams:
+            if bigram in letter_pair_frequencies:
+                pair_letters_fitness += letter_pair_frequencies[bigram]
 
-    fitness_score = 0.4*(word_count / total_count) - 0.2*letter_freq_fitness + 0.2*pair_letters_fitness
+        fitness_score = 0.4*(word_count / total_count) - 0.2*letter_freq_fitness + 0.2*pair_letters_fitness
+        # append the fitness_score of this solution to the fitness_scores list
+        fitness_scores.append(fitness_score)
 
-    return fitness_score
+    return fitness_scores
 
 
 def simplified_fitness(solution, cipher_text):
@@ -161,10 +166,6 @@ def decipher(cipher_text, perm_rules_decoder):
 
     table = str.maketrans(string.ascii_lowercase + string.ascii_uppercase, perm_rules_decoder + perm_rules_decoder.upper())
     return cipher_text.translate(table)
-
-
-
-
 
 def decipher_convert_format(cipher_text, perm_rules_decoder):
     # Stores a list of boolean values indicating whether each character in the cipher text is uppercase.
@@ -271,6 +272,8 @@ def PMX(parent1, parent2):
 #     return ''.join(child)
 
 
+
+
 # Mutation function: performs a swap mutation on a solution if a random number is less than the mutation rate.
 def mutation(solution, mutation_rate):
     # Swap mutation only if mutation rate condition is satisfied
@@ -281,7 +284,26 @@ def mutation(solution, mutation_rate):
         return ''.join(mutated)
     return solution
 
+"""
+def mutation(solution, cipher_text, mutation_rate):
+    # Get a set of unique letters present in the cipher text
+    cipher_letters = set(cipher_text)
 
+    # Create a list of indexes for the letters in the solution that are present in the cipher text
+    valid_indexes = [i for i, letter in enumerate(solution) if letter in cipher_letters]
+
+    # Swap mutation only if mutation rate condition is satisfied
+    if random.random() < mutation_rate and len(valid_indexes) > 1:
+        # Choose two random valid indexes for swapping
+        i, j = random.sample(valid_indexes, 2)
+
+        # Perform the swap mutation
+        mutated = list(solution)
+        mutated[i], mutated[j] = mutated[j], mutated[i]
+
+        return ''.join(mutated)
+    return solution
+"""
 # Generate new solutions for the next generation by applying crossover and mutation to the selected population.
 def generate_new_solutions(selected_population, mutation_rate):
     population_size = len(selected_population)
@@ -299,28 +321,91 @@ def generate_new_solutions(selected_population, mutation_rate):
         new_population.extend([child1, child2])
     return new_population
 
+
+def local_optimization(population, cipher_text, N, lamarkian=False):
+    # Initialize the best solutions and scores with the current population
+    best_solutions = list(population)
+    # Calculate the fitness scores for the entire population
+    best_scores = fitness(population, cipher_text)
+
+    # Iterate over each solution in the population
+    for idx in range(len(population)):
+        solution = population[idx]
+
+        # Perform local optimization for the specified number of iterations (N)
+        for _ in range(N):
+            i, j = random.sample(range(len(solution)), 2)  # Select two random positions
+            candidate = list(solution)
+            candidate[i], candidate[j] = candidate[j], candidate[i]  # Swap the selected positions
+            candidate = ''.join(candidate)
+
+            population[idx] = candidate  # Update the solution in the population
+
+        # Calculate the fitness scores for the entire population
+
+        candidate_scores = fitness([population[idx]], cipher_text)[0]  # Get the fitness score of the candidate solution
+
+        # Update the best score and solution if the candidate score is higher
+        if candidate_scores > best_scores[idx]:
+            best_scores[idx] = candidate_scores
+            if lamarkian:
+                best_solutions[idx] = population[idx]
+
+    return best_solutions, best_scores
+
+
 # Genetic Algorithm
-def genetic_algorithm(cipher_text, population_size=120, max_mutation_rate=0.4, min_mutation_rate=0.05, max_iterations=1000, elitism=True, fitness_stagnation_threshold=20):
+def genetic_algorithm(queue, cipher_text, optimization=None, population_size=120, max_mutation_rate=0.4, min_mutation_rate=0.05, max_iterations=1000, elitism=True, fitness_stagnation_threshold=20):
+    print(f"Population size: {population_size}, Type: {type(population_size)}")  # Print statement
     # Generate initial population of solutions (= permutation of letters)
     population = [init_generate_solution() for _ in range(population_size)]
     best_score = float('-inf')
     best_solution = ''
     stagnation_counter = 0  # Counter to track the number of iterations with no improvement
-
+    # max_mutation_rate = 0.01
+    # min_mutation_rate = 0.3
+    # max_iterations = 300
     for iteration in range(max_iterations):
         # mutation rate starts at the maximum value and
         # decreases linearly to the minimum value over the course of the iterations.
         mutation_rate = max_mutation_rate - (max_mutation_rate - min_mutation_rate) * (iteration/max_iterations)
+        #mutation_rate =+ (max_mutation_rate + (iteration/max_iterations))
 
-
-        scores = [fitness(solution, cipher_text) for solution in population]  # evaluates how good a solution is.
+        scores = fitness(population, cipher_text)  # evaluates how good each solution in the population is.
         #scores = [simplified_fitness(solution, cipher_text) for solution in population]
 
-        # Calculate scores using appropriate fitness function
-        # if iteration > 90 and best_score < 2:
-        #     scores = [simplified_fitness(solution, cipher_text) for solution in population]
-        # else:
-        #     scores = [fitness(solution, cipher_text) for solution in population]
+        if optimization is not None:
+            if optimization == 'lamarckian':
+                print("You are using Lamarckian optimization")
+
+                lamarkian = True
+            else:
+                max_mutation_rate = 0.1
+                min_mutation_rate = 0.05
+                max_iterations = 1000
+                # mutation_rate = max_mutation_rate + (iteration / max_iterations)
+                lamarkian = False
+                print("You are using Darwinian optimization")
+
+            # Perform local optimization on each solution before fitness evaluation
+            # Initialize an empty list to store the optimized population
+            population_optimized = []
+
+            # Perform local optimization on the current solution
+            optimized_solutions, optimized_scores = local_optimization(population, cipher_text, N=10,
+                                                                       lamarkian=lamarkian)
+
+            # Add the optimized solution and score to the list
+            # population_optimized.append((optimized_solutions, optimized_score))
+
+            # Add the optimized solutions and scores to the list
+            population_optimized.extend(zip(optimized_solutions, optimized_scores))
+
+            # Separate the optimized solutions and their scores
+            solutions, scores = zip(*population_optimized)
+
+            # Assign the (potentially) optimized solutions back to the population
+            population = solutions
 
 
         max_score = max(scores)  # find the highest fitness score in the current population.
@@ -333,9 +418,13 @@ def genetic_algorithm(cipher_text, population_size=120, max_mutation_rate=0.4, m
             stagnation_counter += 1  # Increment the counter if there is no improvement
 
         print(f"Iteration: {iteration}, Best solution: {best_solution}, Fitness: {best_score}, Mutation rate: {mutation_rate}")
+        queue.put(f"Iteration: {iteration}, Best solution: {best_solution}, Fitness: {best_score:.3f}, Mutation rate: {mutation_rate:.3f}")
+
 
         if stagnation_counter >= fitness_stagnation_threshold:
             print(f"No improvement in fitness score for {fitness_stagnation_threshold} iterations. Stopping the algorithm.")
+            queue.put(f"No improvement in fitness score for {fitness_stagnation_threshold} iterations. Stopping the algorithm.")
+
             break
 
         selected = selection(population, scores)
@@ -387,11 +476,11 @@ def calculate_accuracy(true_coding_file, results_file):
 
 def main():
     # Usage
-    with open('enc.txt', 'r') as f:
+    with open('test2enc.txt', 'r') as f:
         cipher_text = f.read().strip()
 
-    genetic_algorithm(cipher_text, population_size=120, max_mutation_rate=0.4, min_mutation_rate=0.05, max_iterations=1000, elitism=True)
-    true_coding_file = 'true_perm.txt'  # Replace with the actual file name and path
+    genetic_algorithm(cipher_text, optimization=None, population_size=120, max_mutation_rate=0.4, min_mutation_rate=0.05, max_iterations=1000, elitism=True)
+    true_coding_file = 'true_perm_test2.txt'  # Replace with the actual file name and path
     results_file = 'perm.txt'  # Replace with the actual file name and path
 
     accuracy = calculate_accuracy(true_coding_file, results_file)
