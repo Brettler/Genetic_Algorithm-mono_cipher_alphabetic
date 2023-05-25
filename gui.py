@@ -6,6 +6,7 @@ import queue
 import sys
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
+from tkinter import messagebox
 
 """
 def check_queue(q):
@@ -31,7 +32,13 @@ def check_queue(q):
     except queue.Empty:
         pass  # if there's nothing in the queue, do nothing
     else:
-        message_queue.append(msg)  # add the message to the queue
+        if msg[0] == 'result':
+            # If the message is a 'result' message, show the messagebox with the results
+            fitness_calls, final_solutions, accuracy = msg[1], msg[2], msg[3]
+            messagebox.showinfo("Results", f"Fitness calls: {fitness_calls}\nFinal solutions: {final_solutions}\nAccuracy: {accuracy:.2f}%")
+        else:
+            # Otherwise, add the message to the queue as before
+            message_queue.append(msg)
 
     if current_message_index < len(message_queue):
         output_text.insert(tk.END, message_queue[current_message_index] + '\n')  # display the current message
@@ -50,9 +57,6 @@ def on_close():
     sys.exit()
 
 
-
-
-
 def run_genetic_algorithm():
     global current_message_index
 
@@ -61,8 +65,6 @@ def run_genetic_algorithm():
     message_queue.clear()
     output_text.delete(1.0, tk.END)
     current_message_index = 0  # Reset the current message index
-
-
 
     cipher_text_path = 'enc.txt'
     with open(cipher_text_path, 'r') as f:
@@ -74,7 +76,7 @@ def run_genetic_algorithm():
     min_mutation_rate = float(min_mutation_rate_entry.get())
     max_iterations = int(max_iterations_entry.get())
     elitism = bool(int(elitism_entry.get()))
-    optimization = optimization_combobox.get()  # get the selected value from the combobox
+    optimization = optimization_combobox.get()
 
     #GeneticAlgorithm.genetic_algorithm(cipher_text, optimization, population_size, max_mutation_rate, min_mutation_rate, max_iterations, elitism)
     q = queue.Queue()
