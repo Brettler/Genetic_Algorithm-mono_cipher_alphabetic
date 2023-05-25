@@ -261,7 +261,6 @@ def local_optimization(population, cipher_text, N, lamarkian=False):
 def genetic_algorithm(q, fig, canvas, cipher_text, optimization="None", population_size=120, max_mutation_rate=0.4,
                       min_mutation_rate=0.05, max_iterations=1000, elitism=True, fitness_stagnation_threshold=15):
 
-
     ax = fig.add_subplot(111)
     # Generate initial population of solutions (= permutation of letters)
     population = [init_generate_solution() for _ in range(population_size)]
@@ -280,7 +279,6 @@ def genetic_algorithm(q, fig, canvas, cipher_text, optimization="None", populati
         q.put("You are using Lamarckian optimization")
     elif optimization == 'Darwinian':
         q.put("You are using Darwinian optimization")
-
 
 
     # Track the rate of improvement over the last few generations
@@ -306,16 +304,19 @@ def genetic_algorithm(q, fig, canvas, cipher_text, optimization="None", populati
         ax.set_ylabel('Fittness Score')  # Set the y-axis label
         ax.legend()  # Display the legend
 
-        canvas.draw()  # refresh the canvas
 
         if optimization == 'None':
             # evaluates how good each solution in the population is.
             scores, letter_freq_opt = fitness(population, cipher_text)
+            ax.set_title(f'Genetic Algorithm - Regular')
         else:
             if optimization == 'Lamarckian':
                 lamarkian = True
+                ax.set_title(f'Genetic Algorithm - Lamarckian')
+
             else:
                 lamarkian = False
+                ax.set_title(f'Genetic Algorithm - Darwinian')
 
             # Perform local optimization on each solution before fitness evaluation
             # Initialize an empty list to store the optimized population
@@ -333,6 +334,8 @@ def genetic_algorithm(q, fig, canvas, cipher_text, optimization="None", populati
 
             # Assign the (potentially) optimized solutions back to the population
             population = solutions
+
+        canvas.draw()  # refresh the canvas
 
         max_score = max(scores)  # find the highest fitness score in the current population.
         max_index = scores.index(max_score)  # find the index of the solution that achieved this score
@@ -401,12 +404,19 @@ def genetic_algorithm(q, fig, canvas, cipher_text, optimization="None", populati
             ###################### need to change to best_solution[i].upper() ##################################################
             f.write(f"{string.ascii_lowercase[i]} {best_solution[i]}\n")
 
+    fig.savefig('GeneticGraph.png')
+
     true_coding_file = 'true_perm.txt'  # Replace with the actual file name and path
     results_file = 'perm.txt'  # Replace with the actual file name and path
 
     accuracy = calculate_accuracy(true_coding_file, results_file)
     print(f"Accuracy: {accuracy:.2f}%")
     q.put(f"The algorithm successfully decipher {accuracy:.2f}% correct.")
+    fitness_calls = iteration
+    final_solutions = best_solution
+
+    q.put(('result', fitness_calls, final_solutions, accuracy))
+
     return best_solution, best_score
 
 
