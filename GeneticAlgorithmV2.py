@@ -3,7 +3,6 @@ import string
 from collections import Counter
 from collections import deque
 
-
 # Open the file dict.txt in read mode and load all words
 # into a set after converting them to lower case.
 with open('dict.txt', 'r') as f:
@@ -35,7 +34,7 @@ def init_generate_solution():
 
 
 # Fitness function: the higher the score, the closer the solution is to being correct.
-def fitness(solutions, cipher_text):
+def fitness(solutions, cipher_text, hyper_params):
     """
     :param solutions: a list of solutions. Each solution is a permutation of lowercase English letters, such that each letter coding to the real English letter.
     :param cipher_text: Input cipher text we need to decipher.
@@ -107,8 +106,14 @@ def fitness(solutions, cipher_text):
             if absolute_difference == 0:
                 pair_letters_correct += english_bigram_frequency
 
-        fitness_score = (word_count / total_count) - 0.5 * letter_freq_fitness - 0.5 * pair_letters_fitness \
-                        + 0.5*pair_letters_correct/(len(deciphered_text) - 1) + 0.5*letter_correct/len(deciphered_text)
+        # fitness_score = (word_count / total_count) - 0.5 * letter_freq_fitness - 0.5 * pair_letters_fitness \
+        #                 + 0.5*pair_letters_correct/(len(deciphered_text) - 1) + 0.5*letter_correct/len(deciphered_text)
+
+        fitness_score = hyper_params.word_hyper_param * (word_count / total_count) \
+                        - hyper_params.letter_hyper_param * letter_freq_fitness\
+                        - hyper_params.pair_letters_hyper_param * pair_letters_fitness \
+                        + hyper_params.hyper_pair_letters_correct * pair_letters_correct / (len(deciphered_text) - 1)\
+                        + hyper_params.hyper_letter_correct * letter_correct / len(deciphered_text)
         # append the fitness_score of this solution to the fitness_scores list
         fitness_scores.append(fitness_score)
 
@@ -187,6 +192,18 @@ def Crossover(parent1, parent2):
     # Return the child as a string
     return ''.join(child)
 
+# Mutation function: performs a swap mutation on a solution if a random number is less than the mutation rate.
+def random_mutation(solution, mutation_rate):
+    # Swap mutation only if mutation rate condition is satisfied
+    if random.random() < mutation_rate:
+        i, j = random.sample(range(len(solution)), 2)
+        mutated = list(solution)
+        print(f"mutated: {mutated}")
+        mutated[i], mutated[j] = mutated[j], mutated[i]
+        print(f"mutated after: {''.join(mutated)}")
+        return ''.join(mutated)
+    return solution
+
 def mutation(solution, mutation_rate, max_letter, min_letter):
     # Swap mutation only if mutation rate condition is satisfied
     if random.random() < mutation_rate:
@@ -201,13 +218,12 @@ def mutation(solution, mutation_rate, max_letter, min_letter):
 
 
 # Generate new solutions for the next generation by applying crossover and mutation to the selected population.
-def generate_new_solutions(selected_population, mutation_rate, letter_freq_opt):
+def generate_new_solutions(selected_population, mutation_rate, letter_freq_opt, random_mutation_func):
     population_size = len(selected_population)
     new_population = []
 
     for i in range(population_size // 2):
         parent1, parent2 = random.sample(selected_population, 2)
-
 
         child1, child2 = Crossover(parent1, parent2), Crossover(parent2, parent1)
 
@@ -221,11 +237,14 @@ def generate_new_solutions(selected_population, mutation_rate, letter_freq_opt):
 
         child1 = mutation(child1, mutation_rate, max_letter_daddy, min_letter_daddy)
         child2 = mutation(child2, mutation_rate, max_letter_mommy, min_letter_mommy)
+        if random_mutation_func:
+            child1 = random_mutation(child1, mutation_rate)
+            child2 = random_mutation(child2, mutation_rate)
         new_population.extend([child1, child2])
     return new_population
 
 
-def local_optimization(population, cipher_text, N, lamarkian=False):
+def local_optimization(population, cipher_text, hyper_params, lamarkian=False):
     # Initialize the best solutions and scores with the current population
     best_solutions = list(population)
     # Calculate the fitness scores for the entire population
@@ -236,7 +255,8 @@ def local_optimization(population, cipher_text, N, lamarkian=False):
         solution = population[idx]
 
         # Perform local optimization for the specified number of iterations (N)
-        for _ in range(N):
+        for _ in range(hyper_params.N):
+
             i, j = random.sample(range(len(solution)), 2)  # Select two random positions
             candidate = list(solution)
             candidate[i], candidate[j] = candidate[j], candidate[i]  # Swap the selected positions
@@ -256,11 +276,18 @@ def local_optimization(population, cipher_text, N, lamarkian=False):
 
     return best_solutions, best_scores, letter_freq_opt
 
+
 # Genetic Algorithm
 # If we want to use gui we need to put as first parameter 'queue'
-def genetic_algorithm(q, fig, canvas, cipher_text, optimization="None", population_size=120, max_mutation_rate=0.4,
-                      min_mutation_rate=0.05, max_iterations=1000, elitism=True, fitness_stagnation_threshold=15):
-
+def genetic_algorithm(q, hyper_params, fig, canvas, cipher_text,
+                      optimization="None",
+                      population_size=120,
+                      mutation_rate=0.1,
+                      max_mutation_rate=0.4,
+                      min_mutation_rate=0.05,
+                      max_iterations=1000,
+                      elitism=True,
+                      fitness_stagnation_threshold=15):
     ax = fig.add_subplot(111)
     # Generate initial population of solutions (= permutation of letters)
     population = [init_generate_solution() for _ in range(population_size)]
@@ -271,7 +298,8 @@ def genetic_algorithm(q, fig, canvas, cipher_text, optimization="None", populati
     # max_mutation_rate = 0.001
     # min_mutation_rate = 0.3
     # max_iterations = 300
-    mutation_rate = 0.1
+    #mutation_rate = 0.1
+
     # Start with an initial best score
     previous_best_score = float('-inf')
 
@@ -280,9 +308,11 @@ def genetic_algorithm(q, fig, canvas, cipher_text, optimization="None", populati
     elif optimization == 'Darwinian':
         q.put("You are using Darwinian optimization")
 
+    # # Track the rate of improvement over the last few generations
+    # improvement_rates = deque(maxlen=5)
 
     # Track the rate of improvement over the last few generations
-    improvement_rates = deque(maxlen=5)
+    improvement_rates = deque(maxlen=hyper_params.improvement_rates_queue_length)
 
     # Prepare lists to store iteration and score values
     best_scores = []
@@ -304,10 +334,9 @@ def genetic_algorithm(q, fig, canvas, cipher_text, optimization="None", populati
         ax.set_ylabel('Fittness Score')  # Set the y-axis label
         ax.legend()  # Display the legend
 
-
         if optimization == 'None':
             # evaluates how good each solution in the population is.
-            scores, letter_freq_opt = fitness(population, cipher_text)
+            scores, letter_freq_opt = fitness(population, cipher_text, hyper_params)
             ax.set_title(f'Genetic Algorithm - Regular')
         else:
             if optimization == 'Lamarckian':
@@ -323,7 +352,8 @@ def genetic_algorithm(q, fig, canvas, cipher_text, optimization="None", populati
             population_optimized = []
 
             # Perform local optimization on the current solution
-            optimized_solutions, optimized_scores, letter_freq_opt = local_optimization(population, cipher_text, N=5,
+            optimized_solutions, optimized_scores, letter_freq_opt = local_optimization(population, cipher_text,
+                                                                                        hyper_params,
                                                                                         lamarkian=lamarkian)
 
             # Add the optimized solutions and scores to the list
@@ -352,14 +382,21 @@ def genetic_algorithm(q, fig, canvas, cipher_text, optimization="None", populati
 
         # If the rate of improvement is lower than a threshold (here 0.01 is an example value),
         # increase the mutation rate
-        if average_improvement_rate <= 0.005:
-            mutation_rate += 0.08
+        # if average_improvement_rate <= 0.005:
 
+        if average_improvement_rate <= hyper_params.mutation_trashold:
+            # mutation_rate += 0.08
+            #
+            # mutation_rate = min(max_mutation_rate, mutation_rate)  # ensure mutation rate doesn't exceed maximum
+
+            mutation_rate += hyper_params.increase_mutation
             mutation_rate = min(max_mutation_rate, mutation_rate)  # ensure mutation rate doesn't exceed maximum
-
         # If the rate of improvement is higher than the threshold, decrease the mutation rate
         else:
-            mutation_rate -= 0.05
+            # mutation_rate -= 0.05
+            # mutation_rate = max(min_mutation_rate, mutation_rate)  # ensure mutation rate doesn't fall below minimum
+
+            mutation_rate -= hyper_params.decrease_mutation
             mutation_rate = max(min_mutation_rate, mutation_rate)  # ensure mutation rate doesn't fall below minimum
 
         previous_best_score = max_score
@@ -372,18 +409,23 @@ def genetic_algorithm(q, fig, canvas, cipher_text, optimization="None", populati
             stop_counter += 1  # Increment the counter if there is no improvement
         print(
             f"Iteration: {iteration}, Best solution: {best_solution}, Fitness: {best_score}, Average improvement_rate: {average_improvement_rate}, Mutation rate: {mutation_rate}")
-        q.put(f"Iteration: {iteration}, Best solution: {best_solution}, Fitness: {best_score:.3f}, Average improvement_rate: {average_improvement_rate:.3f}, Mutation rate: {mutation_rate:.3f}")
+        q.put(
+            f"Iteration: {iteration}, Best solution: {best_solution}, Fitness: {best_score:.3f}, Average improvement_rate: {average_improvement_rate:.3f}, Mutation rate: {mutation_rate:.3f}")
 
         if stop_counter >= fitness_stagnation_threshold:
             print(
                 f"No improvement in fitness score for {fitness_stagnation_threshold} iterations. Stopping the algorithm.")
-            q.put(f"No improvement in fitness score for {fitness_stagnation_threshold} iterations. Stopping the algorithm.")
+            q.put(
+                f"No improvement in fitness score for {fitness_stagnation_threshold} iterations. Stopping the algorithm.")
 
             break
 
         selected = selection(population, scores)
-        population = generate_new_solutions(selected, mutation_rate, letter_freq_opt)
+        population = generate_new_solutions(selected, mutation_rate, letter_freq_opt, hyper_params.random_mutation_func)
+        print(hyper_params.mutation_trashold)
 
+        print(mutation_rate)
+        print(hyper_params.decrease_mutation)
         # Elitism - Ensure the best solution is always in population
         if elitism and best_solution not in population:
             # If the best solution is not already in the population, it replaces a random solution.
@@ -449,13 +491,14 @@ def main():
     with open('test1enc.txt', 'r') as f:
         cipher_text = f.read().strip()
 
-    genetic_algorithm(cipher_text, optimization='None', population_size=200, max_mutation_rate=0.4, min_mutation_rate=0.02,
+    genetic_algorithm(cipher_text, optimization='None', population_size=200, max_mutation_rate=0.4,
+                      min_mutation_rate=0.02,
                       max_iterations=300, elitism=True)
-    #true_coding_file = 'true_perm.txt'  # Replace with the actual file name and path
-    #results_file = 'perm.txt'  # Replace with the actual file name and path
+    # true_coding_file = 'true_perm.txt'  # Replace with the actual file name and path
+    # results_file = 'perm.txt'  # Replace with the actual file name and path
 
-    #accuracy = calculate_accuracy(true_coding_file, results_file)
-    #print(f"Accuracy: {accuracy:.2f}%")
+    # accuracy = calculate_accuracy(true_coding_file, results_file)
+    # print(f"Accuracy: {accuracy:.2f}%")
 
 
 # Press the green button in the gutter to run the script.

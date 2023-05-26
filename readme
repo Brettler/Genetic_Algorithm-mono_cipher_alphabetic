@@ -1,3 +1,8 @@
+
+
+############## Remember to install mapoltlib to run this program ###########
+
+
 Word Length Weighting: The count of correctly deciphered words is weighted by the length of the word.
 This will favor solutions that correctly decipher longer words, which are less likely to occur by chance.
 
