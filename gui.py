@@ -7,7 +7,7 @@ import sys
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
 from tkinter import messagebox
-
+from hyper_params import hyper_parameter_object
 """
 def check_queue(q):
     try:
@@ -23,9 +23,22 @@ def check_queue(q):
 
 message_queue = []  # Store the messages
 current_message_index = 0  # Index of the current message being displayed
+# Set default values for the global variables
+default_word_hyper_param = 1
+default_letter_hyper_param = 0.5
+default_pair_letters_hyper_param = 0.5
+default_hyper_letter_correct = 0.5
+default_hyper_pair_letters_correct = 0.5
+default_mutation_rate_starting = 0.1
+default_mutation_trashold = 0.005
+default_increase_mutation = 0.08
+default_decrease_mutation = 0.05
+default_improvement_rates_queue_length = 5
+default_N = 5
 
 def check_queue(q):
     global current_message_index
+
 
     try:
         msg = q.get_nowait()  # try to get a message from the queue
@@ -59,7 +72,7 @@ def on_close():
 
 def run_genetic_algorithm():
     global current_message_index
-
+    hyper_params = hyper_parameter_object()
     # Clear the figure, message queue and output text
     fig.clf()
     message_queue.clear()
@@ -72,15 +85,33 @@ def run_genetic_algorithm():
 
 
     population_size = int(population_size_entry.get())
+    mutation_rate_starting = float(mutation_rate_starting_entry.get())
     max_mutation_rate = float(max_mutation_rate_entry.get())
     min_mutation_rate = float(min_mutation_rate_entry.get())
     max_iterations = int(max_iterations_entry.get())
-    elitism = bool(int(elitism_entry.get()))
+    elitism = bool(elitism_var.get())
     optimization = optimization_combobox.get()
+
+    # Get user input for the global variables
+    hyper_params.word_hyper_param = float(word_hyper_param_entry.get())
+    hyper_params.letter_hyper_param = float(letter_hyper_param_entry.get())
+    hyper_params.pair_letters_hyper_param = float(pair_letters_hyper_param_entry.get())
+    hyper_params.hyper_letter_correct = float(hyper_letter_correct_entry.get())
+    hyper_params.hyper_pair_letters_correct = float(hyper_pair_letters_correct_entry.get())
+    hyper_params.mutation_trashold = float(mutation_trashold_entry.get())
+    hyper_params.increase_mutation = float(increase_mutation_entry.get())
+    hyper_params.decrease_mutation = float(decrease_mutation_entry.get())
+    hyper_params.improvement_rates_queue_length = int(improvement_rates_queue_length_entry.get())
+    hyper_params.N = int(N_entry.get())
+    hyper_params.random_mutation_func = bool(random_mutation_func_var.get())
+
+
+
+
 
     #GeneticAlgorithm.genetic_algorithm(cipher_text, optimization, population_size, max_mutation_rate, min_mutation_rate, max_iterations, elitism)
     q = queue.Queue()
-    thread = threading.Thread(target=GeneticAlgorithmV2.genetic_algorithm, args=(q, fig, canvas, cipher_text, optimization, population_size, max_mutation_rate, min_mutation_rate, max_iterations, elitism))
+    thread = threading.Thread(target=GeneticAlgorithmV2.genetic_algorithm, args=(q, hyper_params, fig, canvas, cipher_text, optimization, population_size, mutation_rate_starting, max_mutation_rate, min_mutation_rate, max_iterations, elitism))
     thread.daemon = True
     thread.start()
     check_queue(q)  # check the queue for messages right away
@@ -91,35 +122,113 @@ fig = Figure(figsize=(5, 4), dpi=100)
 canvas = FigureCanvasTkAgg(fig, master=root)  # A tk.DrawingArea.
 canvas.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=1)
 
-population_size_label = tk.Label(root, text="Population number:")
-population_size_label.pack()
-population_size_entry = tk.Entry(root)
-population_size_entry.pack()
+# Create a frame to hold the input fields
+input_frame = tk.Frame(root)
+input_frame.pack()
+
+
+# Create input fields for the global variables with default values
+word_hyper_param_label = tk.Label(input_frame, text="Word hyper parameter:")
+word_hyper_param_label.grid(row=0, column=0)
+word_hyper_param_entry = tk.Entry(input_frame)
+word_hyper_param_entry.grid(row=0, column=1)
+word_hyper_param_entry.insert(0, str(default_word_hyper_param))
+
+letter_hyper_param_label = tk.Label(input_frame, text="Letter hyper parameter:")
+letter_hyper_param_label.grid(row=1, column=0)
+letter_hyper_param_entry = tk.Entry(input_frame)
+letter_hyper_param_entry.grid(row=1, column=1)
+letter_hyper_param_entry.insert(0, str(default_letter_hyper_param))
+
+pair_letters_hyper_param_label = tk.Label(input_frame, text="Pair letters hyper parameter:")
+pair_letters_hyper_param_label.grid(row=2, column=0)
+pair_letters_hyper_param_entry = tk.Entry(input_frame)
+pair_letters_hyper_param_entry.grid(row=2, column=1)
+pair_letters_hyper_param_entry.insert(0, str(default_pair_letters_hyper_param))
+
+hyper_letter_correct_label = tk.Label(input_frame, text="Hyper letter correct:")
+hyper_letter_correct_label.grid(row=3, column=0)
+hyper_letter_correct_entry = tk.Entry(input_frame)
+hyper_letter_correct_entry.grid(row=3, column=1)
+hyper_letter_correct_entry.insert(0, str(default_hyper_letter_correct))
+
+hyper_pair_letters_correct_label = tk.Label(input_frame, text="Hyper pair letters correct:")
+hyper_pair_letters_correct_label.grid(row=4, column=0)
+hyper_pair_letters_correct_entry = tk.Entry(input_frame)
+hyper_pair_letters_correct_entry.grid(row=4, column=1)
+hyper_pair_letters_correct_entry.insert(0, str(default_hyper_pair_letters_correct))
+
+improvement_rates_queue_length_label = tk.Label(input_frame, text="Improvement rates queue length:")
+improvement_rates_queue_length_label.grid(row=4, column=2)
+improvement_rates_queue_length_entry = tk.Entry(input_frame)
+improvement_rates_queue_length_entry.grid(row=4, column=3)
+improvement_rates_queue_length_entry.insert(0, str(default_improvement_rates_queue_length))
+
+N_label = tk.Label(input_frame, text="N:")
+N_label.grid(row=0, column=4)
+N_entry = tk.Entry(input_frame)
+N_entry.grid(row=0, column=5)
+N_entry.insert(0, str(default_N))
+
+population_size_label = tk.Label(input_frame, text="Population number:")
+population_size_label.grid(row=1, column=4)
+population_size_entry = tk.Entry(input_frame)
+population_size_entry.grid(row=1, column=5)
 population_size_entry.insert(0, "200")
 
-max_mutation_rate_label = tk.Label(root, text="Mutation rate:")
-max_mutation_rate_label.pack()
-max_mutation_rate_entry = tk.Entry(root)
-max_mutation_rate_entry.pack()
+mutation_trashold_label = tk.Label(input_frame, text="Mutation threshold:")
+mutation_trashold_label.grid(row=1, column=2)
+mutation_trashold_entry = tk.Entry(input_frame)
+mutation_trashold_entry.grid(row=1, column=3)
+mutation_trashold_entry.insert(0, str(default_mutation_trashold))
+
+increase_mutation_label = tk.Label(input_frame, text="Increase mutation:")
+increase_mutation_label.grid(row=2, column=2)
+increase_mutation_entry = tk.Entry(input_frame)
+increase_mutation_entry.grid(row=2, column=3)
+increase_mutation_entry.insert(0, str(default_increase_mutation))
+
+decrease_mutation_label = tk.Label(input_frame, text="Decrease mutation:")
+decrease_mutation_label.grid(row=3, column=2)
+decrease_mutation_entry = tk.Entry(input_frame)
+decrease_mutation_entry.grid(row=3, column=3)
+decrease_mutation_entry.insert(0, str(default_decrease_mutation))
+
+mutation_rate_starting_label = tk.Label(input_frame, text="Mutation rate:")
+mutation_rate_starting_label.grid(row=0, column=2)
+mutation_rate_starting_entry = tk.Entry(input_frame)
+mutation_rate_starting_entry.grid(row=0, column=3)
+mutation_rate_starting_entry.insert(0, str(default_mutation_rate_starting))
+
+
+max_mutation_rate_label = tk.Label(input_frame, text="Maximum mutation rate:")
+max_mutation_rate_label.grid(row=2, column=4)
+max_mutation_rate_entry = tk.Entry(input_frame)
+max_mutation_rate_entry.grid(row=2, column=5)
 max_mutation_rate_entry.insert(0, "0.4")
 
-min_mutation_rate_label = tk.Label(root, text="Minimum mutation rate:")
-min_mutation_rate_label.pack()
-min_mutation_rate_entry = tk.Entry(root)
-min_mutation_rate_entry.pack()
+min_mutation_rate_label = tk.Label(input_frame, text="Minimum mutation rate:")
+min_mutation_rate_label.grid(row=3, column=4)
+min_mutation_rate_entry = tk.Entry(input_frame)
+min_mutation_rate_entry.grid(row=3, column=5)
 min_mutation_rate_entry.insert(0, "0.02")
 
-max_iterations_label = tk.Label(root, text="Maximum iterations:")
-max_iterations_label.pack()
-max_iterations_entry = tk.Entry(root)
-max_iterations_entry.pack()
+max_iterations_label = tk.Label(input_frame, text="Maximum iterations:")
+max_iterations_label.grid(row=4, column=4)
+max_iterations_entry = tk.Entry(input_frame)
+max_iterations_entry.grid(row=4, column=5)
 max_iterations_entry.insert(0, "300")
 
-elitism_label = tk.Label(root, text="Elitism:")
-elitism_label.pack()
-elitism_entry = tk.Entry(root)
-elitism_entry.pack()
-elitism_entry.insert(0, "1")
+elitism_var = tk.IntVar()
+elitism_checkbox = tk.Checkbutton(input_frame, text="Elitism", variable=elitism_var)
+elitism_checkbox.grid(row=5, column=4)
+elitism_var.set(1)  # Default value for elitism is set to True (1)
+
+random_mutation_func_var = tk.IntVar()
+random_mutation_func_checkbox = tk.Checkbutton(input_frame, text="Use random mutation function", variable=random_mutation_func_var)
+random_mutation_func_checkbox.grid(row=5, column=0)  # Put this under Elitism checkbox
+random_mutation_func_var.set(0)  # Default value for random_mutation_func is set to False (0)
+
 
 # Create the combobox for selecting the optimization strategy
 optimization_label = tk.Label(root, text="Optimization strategy:")
@@ -127,6 +236,13 @@ optimization_label.pack()
 optimization_combobox = ttk.Combobox(root, values=["None", "Darwinian", "Lamarckian"])
 optimization_combobox.pack()
 optimization_combobox.current(0)  # set initial selection to "None"
+
+
+
+
+
+
+
 
 run_button = tk.Button(root, text="Run", command=run_genetic_algorithm)
 run_button.pack()
