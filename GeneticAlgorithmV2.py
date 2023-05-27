@@ -329,7 +329,7 @@ def genetic_algorithm(q, hyper_params, fig, canvas, cipher_text,
 
     for iteration in range(max_iterations):
 
-        # Store values
+        # Store values to build the graph over each iteration.
         iterations.append(iteration)
         best_scores.append(best_score)
         min_scores.append(min_score)
