@@ -337,7 +337,7 @@ def genetic_algorithm(q, hyper_params, fig, canvas, cipher_text,
         if optimization == 'None':
             # evaluates how good each solution in the population is.
             scores, letter_freq_opt = fitness(population, cipher_text, hyper_params)
-            ax.set_title(f'Genetic Algorithm - Regular')
+            ax.set_title(f'Genetic Algorithm - Classic')
         else:
             if optimization == 'Lamarckian':
                 lamarkian = True
