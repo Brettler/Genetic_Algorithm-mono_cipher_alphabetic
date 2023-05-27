@@ -443,6 +443,7 @@ def genetic_algorithm(cipher_text, optimization, population_size=120, max_mutati
 
     return best_solution, best_score
 
+
 def calculate_accuracy(true_coding_file, results_file):
     true_coding = {}
     with open(true_coding_file, 'r') as f:

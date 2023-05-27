@@ -12,3 +12,5 @@ class hyper_parameter_object:
         self.improvement_rates_queue_length = 5
         self.N = 5
         self.random_mutation_func = False
+        self.input_enc_file = 'enc.txt'
+        self.true_perm_file = 'true_perm.txt'
