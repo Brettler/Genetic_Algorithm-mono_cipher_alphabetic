@@ -121,10 +121,6 @@ canvas.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=1)
 input_frame = tk.Frame(root)
 input_frame.pack()
 
-
-
-
-
 # Create input fields for the global variables with default values
 word_hyper_param_label = tk.Label(input_frame, text="Word hyper parameter:")
 word_hyper_param_label.grid(row=0, column=0)
