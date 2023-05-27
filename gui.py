@@ -8,18 +8,6 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
 from tkinter import messagebox
 from hyper_params import hyper_parameter_object
-"""
-def check_queue(q):
-    try:
-        msg = q.get_nowait()  # try to get a message from the queue
-    except queue.Empty:
-        pass  # if there's nothing in the queue, do nothing
-    else:
-        output_text.insert(tk.END, msg + '\n')  # add the message to the text widget
-        output_text.see(tk.END)  # scroll to the last line
-
-    root.after(1, check_queue, q)  # check the queue again after 100 ms
-"""
 
 message_queue = []  # Store the messages
 current_message_index = 0  # Index of the current message being displayed
@@ -35,10 +23,11 @@ default_increase_mutation = 0.08
 default_decrease_mutation = 0.05
 default_improvement_rates_queue_length = 5
 default_N = 5
+default_input_txt = 'enc.txt'
+default_true_txt = 'true_perm.txt'
 
 def check_queue(q):
     global current_message_index
-
 
     try:
         msg = q.get_nowait()  # try to get a message from the queue
@@ -47,8 +36,12 @@ def check_queue(q):
     else:
         if msg[0] == 'result':
             # If the message is a 'result' message, show the messagebox with the results
-            fitness_calls, final_solutions, accuracy = msg[1], msg[2], msg[3]
-            messagebox.showinfo("Results", f"Fitness calls: {fitness_calls}\nFinal solutions: {final_solutions}\nAccuracy: {accuracy:.2f}%")
+            fitness_calls, number_generations, final_fitness_score, final_solutions, accuracy = msg[1], msg[2], msg[3], msg[4], msg[5]
+            messagebox.showinfo("Results", f"Fitness calls:  {fitness_calls}\n"
+                                           f"Number of Generations:  {number_generations}\n"
+                                           f"Fitness score:  {final_fitness_score:.3f}\n"                           
+                                           f"Final solutions:  {final_solutions}\n"
+                                           f"Accuracy:  {accuracy:.2f}%")
         else:
             # Otherwise, add the message to the queue as before
             message_queue.append(msg)
@@ -79,9 +72,9 @@ def run_genetic_algorithm():
     output_text.delete(1.0, tk.END)
     current_message_index = 0  # Reset the current message index
 
-    cipher_text_path = 'enc.txt'
-    with open(cipher_text_path, 'r') as f:
-        cipher_text = f.read().strip()
+    # cipher_text_path = 'enc.txt'
+    # with open(cipher_text_path, 'r') as f:
+    #     cipher_text = f.read().strip()
 
 
     population_size = int(population_size_entry.get())
@@ -103,11 +96,12 @@ def run_genetic_algorithm():
     hyper_params.decrease_mutation = float(decrease_mutation_entry.get())
     hyper_params.improvement_rates_queue_length = int(improvement_rates_queue_length_entry.get())
     hyper_params.N = int(N_entry.get())
-    hyper_params.random_mutation_func = bool(random_mutation_func_var.get())
+    # hyper_params.random_mutation_func = bool(random_mutation_func_var.get())
+    hyper_params.input_enc_file = str(file_name_entry.get())
+    hyper_params.true_perm_file = str(true_permutation_entry.get())
 
-
-
-
+    with open(hyper_params.input_enc_file, 'r') as f:
+        cipher_text = f.read().strip()
 
     #GeneticAlgorithm.genetic_algorithm(cipher_text, optimization, population_size, max_mutation_rate, min_mutation_rate, max_iterations, elitism)
     q = queue.Queue()
@@ -115,6 +109,7 @@ def run_genetic_algorithm():
     thread.daemon = True
     thread.start()
     check_queue(q)  # check the queue for messages right away
+
 
 root = tk.Tk()
 
@@ -125,6 +120,9 @@ canvas.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=1)
 # Create a frame to hold the input fields
 input_frame = tk.Frame(root)
 input_frame.pack()
+
+
+
 
 
 # Create input fields for the global variables with default values
@@ -200,7 +198,6 @@ mutation_rate_starting_entry = tk.Entry(input_frame)
 mutation_rate_starting_entry.grid(row=0, column=3)
 mutation_rate_starting_entry.insert(0, str(default_mutation_rate_starting))
 
-
 max_mutation_rate_label = tk.Label(input_frame, text="Maximum mutation rate:")
 max_mutation_rate_label.grid(row=2, column=4)
 max_mutation_rate_entry = tk.Entry(input_frame)
@@ -221,17 +218,31 @@ max_iterations_entry.insert(0, "150")
 
 elitism_var = tk.IntVar()
 elitism_checkbox = tk.Checkbutton(input_frame, text="Elitism", variable=elitism_var)
-elitism_checkbox.grid(row=5, column=4)
+elitism_checkbox.grid(row=5, column=5)
 elitism_var.set(1)  # Default value for elitism is set to True (1)
 
-random_mutation_func_var = tk.IntVar()
-random_mutation_func_checkbox = tk.Checkbutton(input_frame, text="Use random mutation function", variable=random_mutation_func_var)
-random_mutation_func_checkbox.grid(row=5, column=0)  # Put this under Elitism checkbox
-random_mutation_func_var.set(0)  # Default value for random_mutation_func is set to False (0)
+# random_mutation_func_var = tk.IntVar()
+# random_mutation_func_checkbox = tk.Checkbutton(input_frame, text="Use PURE random mutation function", variable=random_mutation_func_var)
+# random_mutation_func_checkbox.grid(row=5, column=0)  # Put this under Elitism checkbox
+# random_mutation_func_var.set(0)  # Default value for random_mutation_func is set to False (0)
 
+file_name_label = tk.Label(input_frame, text="Encrypt File Name:")
+file_name_label.grid(row=6, column=4)
+file_name_label.config(font=("TkDefaultFont",10, "bold"))  # Set label font to bold
+file_name_entry = tk.Entry(input_frame)
+file_name_entry.grid(row=6, column=5)
+file_name_entry.insert(0, default_input_txt)
+
+true_permutation_label = tk.Label(input_frame, text="True Permutation File Name:")
+true_permutation_label.grid(row=6, column=0)
+true_permutation_label.config(font=("TkDefaultFont", 10, "bold"))  # Set label font to bold
+true_permutation_entry = tk.Entry(input_frame)
+true_permutation_entry.grid(row=6, column=1)
+true_permutation_entry.insert(0, default_true_txt)
 
 # Create the combobox for selecting the optimization strategy
 optimization_label = tk.Label(root, text="Optimization strategy:")
+optimization_label.config(font=("TkDefaultFont", 10, "bold"))  # Set label font to bold
 optimization_label.pack()
 optimization_combobox = ttk.Combobox(root, values=["None", "Darwinian", "Lamarckian"])
 optimization_combobox.pack()
@@ -240,7 +251,23 @@ optimization_combobox.current(0)  # set initial selection to "None"
 
 
 
-
+# Set real only state for the parameters so the user cant change them.
+# word_hyper_param_entry.configure(state='readonly')
+# letter_hyper_param_entry.configure(state='readonly')
+# pair_letters_hyper_param_entry.configure(state='readonly')
+# hyper_letter_correct_entry.configure(state='readonly')
+# hyper_pair_letters_correct_entry.configure(state='readonly')
+# mutation_trashold_entry.configure(state='readonly')
+# increase_mutation_entry.configure(state='readonly')
+# decrease_mutation_entry.configure(state='readonly')
+# improvement_rates_queue_length_entry.configure(state='readonly')
+# N_entry.configure(state='readonly')
+# population_size_entry.configure(state='readonly')
+# mutation_rate_starting_entry.configure(state='readonly')
+# max_mutation_rate_entry.configure(state='readonly')
+# min_mutation_rate_entry.configure(state='readonly')
+# max_iterations_entry.configure(state='readonly')
+# elitism_checkbox.configure(state='disabled')
 
 
 
