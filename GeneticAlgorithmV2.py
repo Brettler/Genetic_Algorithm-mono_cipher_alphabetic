@@ -277,7 +277,6 @@ def local_optimization(population, cipher_text, hyper_params, lamarkian=False):
         # Update the best score and solution if the candidate score is higher
         if scores_candidates_genome[i] > original_best_scores[i]:
             original_best_scores[i] = scores_candidates_genome[i]
-            original_letter_freq[i] = freq_letter_candidates_genome[i]
 
             if lamarkian:
                 original_solutions[i] = modify_genome[i]
@@ -305,6 +304,7 @@ def genetic_algorithm(q, hyper_params, fig, canvas, cipher_text,
     population = [init_generate_solution() for _ in range(population_size)]
     best_score = float('-inf')
     min_score = float('-inf')
+    max_score = float('-inf')
     best_solution = ''
     stop_counter = 0  # Counter to track the number of iterations with no improvement
     # max_mutation_rate = 0.001
@@ -331,7 +331,7 @@ def genetic_algorithm(q, hyper_params, fig, canvas, cipher_text,
 
         # Store values to build the graph over each iteration.
         iterations.append(iteration)
-        best_scores.append(best_score)
+        best_scores.append(max_score)
         min_scores.append(min_score)
 
         ax.clear()  # clear the plot for the new plot
@@ -393,9 +393,9 @@ def genetic_algorithm(q, hyper_params, fig, canvas, cipher_text,
         else:
             stop_counter += 1  # Increment the counter if there is no improvement
         print(
-            f"Iteration: {iteration}, Best solution: {best_solution}, Fitness: {best_score}, Average improvement_rate: {average_improvement_rate}, Mutation rate: {mutation_rate}")
+            f"Iteration: {iteration}, Best solution: {best_solution}, Fitness: {max_score}, Average improvement_rate: {average_improvement_rate}, Mutation rate: {mutation_rate}")
         q.put(
-            f"Iteration: {iteration}, Best solution: {best_solution}, Fitness: {best_score:.3f}, Average improvement_rate: {average_improvement_rate:.3f}, Mutation rate: {mutation_rate:.3f}")
+            f"Iteration: {iteration}, Best solution: {best_solution}, Fitness: {max_score:.3f}, Average improvement_rate: {average_improvement_rate:.3f}, Mutation rate: {mutation_rate:.3f}")
 
         if stop_counter >= fitness_stagnation_threshold:
             print(
