@@ -1,4 +1,4 @@
-# Define the shared variables with their default values
+# Define the shared variables with their default values.
 class hyper_parameter_object:
     def __init__(self):
         self.word_hyper_param = 1
