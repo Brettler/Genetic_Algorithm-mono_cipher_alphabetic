@@ -331,7 +331,7 @@ def genetic_algorithm(q, hyper_params, fig, canvas, cipher_text,
 
         # Store values to build the graph over each iteration.
         iterations.append(iteration)
-        best_scores.append(max_score)
+        best_scores.append(best_score)
         min_scores.append(min_score)
 
         ax.clear()  # clear the plot for the new plot
@@ -393,9 +393,9 @@ def genetic_algorithm(q, hyper_params, fig, canvas, cipher_text,
         else:
             stop_counter += 1  # Increment the counter if there is no improvement
         print(
-            f"Iteration: {iteration}, Best solution: {best_solution}, Fitness: {max_score}, Average improvement_rate: {average_improvement_rate}, Mutation rate: {mutation_rate}")
+            f"Iteration: {iteration}, Best solution: {best_solution}, Fitness: {best_score}, Average improvement_rate: {average_improvement_rate}, Mutation rate: {mutation_rate}")
         q.put(
-            f"Iteration: {iteration}, Best solution: {best_solution}, Fitness: {max_score:.3f}, Average improvement_rate: {average_improvement_rate:.3f}, Mutation rate: {mutation_rate:.3f}")
+            f"Iteration: {iteration}, Best solution: {best_solution}, Fitness: {best_score:.3f}, Average improvement_rate: {average_improvement_rate:.3f}, Mutation rate: {mutation_rate:.3f}")
 
         if stop_counter >= fitness_stagnation_threshold:
             print(
@@ -414,6 +414,10 @@ def genetic_algorithm(q, hyper_params, fig, canvas, cipher_text,
             population[random.randint(0, population_size - 1)] = best_solution
         if elitism and min_score in population:
             population[min_index] = best_solution
+
+
+
+
 
     # After all iterations, decipher the text with best solution
     deciphered_text = decipher_convert_format(cipher_text, best_solution)
