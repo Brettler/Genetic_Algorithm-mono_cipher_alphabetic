@@ -106,9 +106,6 @@ def fitness(solutions, cipher_text, hyper_params):
             if absolute_difference == 0:
                 pair_letters_correct += english_bigram_frequency
 
-        # fitness_score = (word_count / total_count) - 0.5 * letter_freq_fitness - 0.5 * pair_letters_fitness \
-        #                 + 0.5*pair_letters_correct/(len(deciphered_text) - 1) + 0.5*letter_correct/len(deciphered_text)
-
         fitness_score = hyper_params.word_hyper_param * (word_count / total_count) \
                         - hyper_params.letter_hyper_param * letter_freq_fitness\
                         - hyper_params.pair_letters_hyper_param * pair_letters_fitness \
@@ -296,7 +293,7 @@ def genetic_algorithm(q, hyper_params, fig, canvas, cipher_text,
                       min_mutation_rate=0.1,
                       max_iterations=150,
                       elitism=True,
-                      fitness_stagnation_threshold=15):
+                      fitness_stop_threshold=15):
     q.put(f"You are using the following parameters:"
           f"population_size={population_size}\nmutation_rate={mutation_rate}\nmax_mutation_rate={max_mutation_rate}\nmin_mutation_rate={min_mutation_rate}\nN={hyper_params.N}\n")
     ax = fig.add_subplot(111)
@@ -304,13 +301,9 @@ def genetic_algorithm(q, hyper_params, fig, canvas, cipher_text,
     population = [init_generate_solution() for _ in range(population_size)]
     best_score = float('-inf')
     min_score = float('-inf')
-    max_score = float('-inf')
     best_solution = ''
     stop_counter = 0  # Counter to track the number of iterations with no improvement
-    # max_mutation_rate = 0.001
-    # min_mutation_rate = 0.3
-    # max_iterations = 300
-    # mutation_rate = 0.1
+
     iteration = 0
     # Prepare lists to store iteration and score values
     best_scores = []
@@ -321,11 +314,14 @@ def genetic_algorithm(q, hyper_params, fig, canvas, cipher_text,
 
     if optimization == 'Lamarckian':
         q.put("You are using Lamarckian optimization")
+        fitness_stop_threshold = 10
     elif optimization == 'Darwinian':
         q.put("You are using Darwinian optimization")
+        fitness_stop_threshold = 10
 
     # Track the rate of improvement over the last few generations
     improvement_rates = deque(maxlen=hyper_params.improvement_rates_queue_length)
+    original_N = hyper_params.N
 
     for iteration in range(max_iterations):
 
@@ -342,6 +338,11 @@ def genetic_algorithm(q, hyper_params, fig, canvas, cipher_text,
         ax.set_ylabel('Fittness Score')  # Set the y-axis label
         ax.legend()  # Display the legend
 
+        if stop_counter >= 5 and best_score < 0:
+            hyper_params.N = 15
+        else:
+            hyper_params.N = original_N
+        print(hyper_params.N)
         if optimization == 'None':
             # evaluates how good each solution in the population is.
             scores, letter_freq_opt = fitness(population, cipher_text, hyper_params)
@@ -397,11 +398,11 @@ def genetic_algorithm(q, hyper_params, fig, canvas, cipher_text,
         q.put(
             f"Iteration: {iteration}, Best solution: {best_solution}, Fitness: {best_score:.3f}, Average improvement_rate: {average_improvement_rate:.3f}, Mutation rate: {mutation_rate:.3f}")
 
-        if stop_counter >= fitness_stagnation_threshold:
+        if stop_counter >= fitness_stop_threshold:
             print(
-                f"No improvement in fitness score for {fitness_stagnation_threshold} iterations. Stopping the algorithm.")
+                f"No improvement in fitness score for {fitness_stop_threshold} iterations. Stopping the algorithm.")
             q.put(
-                f"No improvement in fitness score for {fitness_stagnation_threshold} iterations. Stopping the algorithm.")
+                f"No improvement in fitness score for {fitness_stop_threshold} iterations. Stopping the algorithm.")
 
             break
 
@@ -414,10 +415,6 @@ def genetic_algorithm(q, hyper_params, fig, canvas, cipher_text,
             population[random.randint(0, population_size - 1)] = best_solution
         if elitism and min_score in population:
             population[min_index] = best_solution
-
-
-
-
 
     # After all iterations, decipher the text with best solution
     deciphered_text = decipher_convert_format(cipher_text, best_solution)
@@ -432,10 +429,10 @@ def genetic_algorithm(q, hyper_params, fig, canvas, cipher_text,
             ###################### need to change to best_solution[i].upper() ##################################################
             f.write(f"{string.ascii_lowercase[i]} {best_solution[i]}\n")
 
-    true_coding_file = 'true_perm.txt'  # Replace with the actual file name and path
+    #true_coding_file = 'true_perm.txt'  # Replace with the actual file name and path
     results_file = 'perm.txt'  # Replace with the actual file name and path
 
-    accuracy = calculate_accuracy(true_coding_file, results_file)
+    accuracy = calculate_accuracy(hyper_params.true_perm_file, results_file)
 
     print(f"Accuracy: {accuracy:.2f}%")
     q.put(f"The algorithm successfully decipher {accuracy:.2f}% correct.")
