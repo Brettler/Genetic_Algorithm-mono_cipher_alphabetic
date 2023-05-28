@@ -317,7 +317,6 @@ def genetic_algorithm(q, hyper_params, fig, canvas, cipher_text,
         fitness_stop_threshold = 10
     elif optimization == 'Darwinian':
         q.put("You are using Darwinian optimization")
-        fitness_stop_threshold = 10
 
     # Track the rate of improvement over the last few generations
     improvement_rates = deque(maxlen=hyper_params.improvement_rates_queue_length)
@@ -339,7 +338,9 @@ def genetic_algorithm(q, hyper_params, fig, canvas, cipher_text,
         ax.legend()  # Display the legend
 
         if stop_counter >= 5 and best_score < 0:
-            hyper_params.N = 15
+            hyper_params.N += 1
+            if hyper_params.N == 10:
+                hyper_params.N = 10
         else:
             hyper_params.N = original_N
         print(hyper_params.N)
