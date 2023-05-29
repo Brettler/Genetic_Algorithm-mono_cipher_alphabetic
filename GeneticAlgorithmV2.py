@@ -2,6 +2,7 @@ import random
 import string
 from collections import Counter
 from collections import deque
+import os
 
 # Open the file dict.txt in read mode and load all words
 # into a set after converting them to lower case.
@@ -36,8 +37,9 @@ def init_generate_solution():
 # Fitness function: the higher the score, the closer the solution is to being correct.
 def fitness(solutions, cipher_text, hyper_params):
     """
-    :param solutions: a list of solutions. Each solution is a permutation of lowercase English letters, such that each letter coding to the real English letter.
+    :param solutions: Each solution is a permutation of lowercase English letters, such that each letter coding to the real English letter.
     :param cipher_text: Input cipher text we need to decipher.
+    :param hyper_params: Object that contain most of the parameters.
     :return:  fitness score - weighted combination of the word count fitness, letter frequency fitness,
                                 and bigram frequency fitness.
     """
@@ -158,9 +160,6 @@ def crossover(parent1, parent2):
     child = [''] * size  # Initialize the child with empty values
     start, end = sorted(random.sample(range(size), 2))  # Select a random range for crossover
     child[start:end] = parent1[start:end]  # Copy the selected range from parent1 to the child
-
-    # Create a mapping between the genes in the selected range of parent1 and parent2
-    # mapping = dict(zip(parent1[start:end], parent2[start:end]))
 
     # We first slice parent1 and parent2 to obtain the selected range from each
     slice_parent1 = parent1[start:end]
@@ -294,8 +293,7 @@ def genetic_algorithm(q, hyper_params, fig, canvas, cipher_text,
                       max_iterations=150,
                       elitism=True,
                       fitness_stop_threshold=15):
-    q.put(f"You are using the following parameters:"
-          f"population_size={population_size}\nmutation_rate={mutation_rate}\nmax_mutation_rate={max_mutation_rate}\nmin_mutation_rate={min_mutation_rate}\nN={hyper_params.N}\n")
+    q.put(f"Remember to calculate accuracy you need to have a file exactly the same format as the 'perm.txt' file.")
     ax = fig.add_subplot(111)
     # Generate initial population of solutions (= permutation of letters)
     population = [init_generate_solution() for _ in range(population_size)]
@@ -315,7 +313,9 @@ def genetic_algorithm(q, hyper_params, fig, canvas, cipher_text,
     if optimization == 'Lamarckian':
         q.put("You are using Lamarckian optimization")
         fitness_stop_threshold = 10
+        hyper_params.improvement_rates_queue_length = 10
     elif optimization == 'Darwinian':
+        hyper_params.improvement_rates_queue_length = 10
         q.put("You are using Darwinian optimization")
 
     # Track the rate of improvement over the last few generations
@@ -343,7 +343,7 @@ def genetic_algorithm(q, hyper_params, fig, canvas, cipher_text,
                 hyper_params.N = 10
         else:
             hyper_params.N = original_N
-        print(hyper_params.N)
+
         if optimization == 'None':
             # evaluates how good each solution in the population is.
             scores, letter_freq_opt = fitness(population, cipher_text, hyper_params)
@@ -355,7 +355,7 @@ def genetic_algorithm(q, hyper_params, fig, canvas, cipher_text,
 
             else:
                 lamarkian = False
-                ax.set_title(f'Genetic Algorithm - Darwinian')
+                ax.set_title(f'Genetic Algorithm ')
 
             # Perform local optimization on the current solution
             population, scores, letter_freq_opt = local_optimization(population, cipher_text, hyper_params,
@@ -394,14 +394,14 @@ def genetic_algorithm(q, hyper_params, fig, canvas, cipher_text,
             stop_counter = 0  # Reset the counter if there is an improvement
         else:
             stop_counter += 1  # Increment the counter if there is no improvement
-        print(
-            f"Iteration: {iteration}, Best solution: {best_solution}, Fitness: {best_score}, Average improvement_rate: {average_improvement_rate}, Mutation rate: {mutation_rate}")
+        # print(
+        #     f"Iteration: {iteration}, Best solution: {best_solution}, Fitness: {best_score}, Average improvement_rate: {average_improvement_rate}, Mutation rate: {mutation_rate}")
         q.put(
             f"Iteration: {iteration}, Best solution: {best_solution}, Fitness: {best_score:.3f}, Average improvement_rate: {average_improvement_rate:.3f}, Mutation rate: {mutation_rate:.3f}")
 
         if stop_counter >= fitness_stop_threshold:
-            print(
-                f"No improvement in fitness score for {fitness_stop_threshold} iterations. Stopping the algorithm.")
+            # print(
+            #     f"No improvement in fitness score for {fitness_stop_threshold} iterations. Stopping the algorithm.")
             q.put(
                 f"No improvement in fitness score for {fitness_stop_threshold} iterations. Stopping the algorithm.")
 
@@ -427,20 +427,24 @@ def genetic_algorithm(q, hyper_params, fig, canvas, cipher_text,
     # Write the permutation table into perm.txt
     with open('perm.txt', 'w') as f:
         for i in range(26):
-            ###################### need to change to best_solution[i].upper() ##################################################
             f.write(f"{string.ascii_lowercase[i]} {best_solution[i]}\n")
 
-    #true_coding_file = 'true_perm.txt'  # Replace with the actual file name and path
     results_file = 'perm.txt'  # Replace with the actual file name and path
 
-    accuracy = calculate_accuracy(hyper_params.true_perm_file, results_file)
+    if os.path.exists(hyper_params.true_perm_file):
+        accuracy = calculate_accuracy(hyper_params.true_perm_file, results_file)
+        q.put(f"The algorithm successfully decipher {accuracy:.2f}% correct.")
+        accuracy = f'{accuracy:.2f}'
+    else:
+        accuracy = 'Cant calculate accuracy.'
+        q.put(f"The algorithm {accuracy}")
 
-    print(f"Accuracy: {accuracy:.2f}%")
-    q.put(f"The algorithm successfully decipher {accuracy:.2f}% correct.")
 
-    random_number = random.random()
-    name_graph = f'GeneticGraph_Accuracy={accuracy:.2f}%_{random_number}.png'
-    fig.savefig(name_graph)
+
+    # This part in comments because it is for saving the graph results in the computer.
+    # random_number = random.random()
+    # name_graph = f'GeneticGraph_Accuracy={accuracy:.2f}%_{random_number}.png'
+    # fig.savefig(name_graph)
 
     if optimization == 'Lamarckian' or optimization == 'Darwinian':
         fitness_calls = 2 * iteration
@@ -494,6 +498,6 @@ def main():
     #                   max_iterations=300, elitism=True)
 
 
-if __name__ == '__main__':
-    main()
-    exit(1)
+# if __name__ == '__main__':
+#     main()
+#     exit(1)

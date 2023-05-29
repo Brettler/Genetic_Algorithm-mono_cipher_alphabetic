@@ -37,11 +37,12 @@ def check_queue(q):
         if msg[0] == 'result':
             # If the message is a 'result' message, show the messagebox with the results
             fitness_calls, number_generations, final_fitness_score, final_solutions, accuracy = msg[1], msg[2], msg[3], msg[4], msg[5]
+
             messagebox.showinfo("Results", f"Fitness calls:  {fitness_calls}\n"
                                            f"Number of Generations:  {number_generations}\n"
                                            f"Fitness score:  {final_fitness_score:.3f}\n"                           
                                            f"Final solutions:  {final_solutions}\n"
-                                           f"Accuracy:  {accuracy:.2f}%")
+                                           f"Accuracy:  {accuracy}%")
         else:
             # Otherwise, add the message to the queue as before
             message_queue.append(msg)
@@ -56,12 +57,10 @@ def check_queue(q):
     else:
         root.after(100, check_queue, q)  # check the queue again after 1 ms
 
-
 def on_close():
-    print("Closing program...")
+    print("Closing program... Thank you for checking the assigment!")
     root.destroy()
     sys.exit()
-
 
 def run_genetic_algorithm():
     global current_message_index
@@ -71,11 +70,6 @@ def run_genetic_algorithm():
     message_queue.clear()
     output_text.delete(1.0, tk.END)
     current_message_index = 0  # Reset the current message index
-
-    # cipher_text_path = 'enc.txt'
-    # with open(cipher_text_path, 'r') as f:
-    #     cipher_text = f.read().strip()
-
 
     population_size = int(population_size_entry.get())
     mutation_rate_starting = float(mutation_rate_starting_entry.get())
@@ -248,28 +242,23 @@ optimization_combobox = ttk.Combobox(root, values=["None", "Darwinian", "Lamarck
 optimization_combobox.pack()
 optimization_combobox.current(0)  # set initial selection to "None"
 
-
-
-
 # Set real only state for the parameters so the user cant change them.
-# word_hyper_param_entry.configure(state='readonly')
-# letter_hyper_param_entry.configure(state='readonly')
-# pair_letters_hyper_param_entry.configure(state='readonly')
-# hyper_letter_correct_entry.configure(state='readonly')
-# hyper_pair_letters_correct_entry.configure(state='readonly')
-# mutation_trashold_entry.configure(state='readonly')
-# increase_mutation_entry.configure(state='readonly')
-# decrease_mutation_entry.configure(state='readonly')
-# improvement_rates_queue_length_entry.configure(state='readonly')
-# N_entry.configure(state='readonly')
-# population_size_entry.configure(state='readonly')
-# mutation_rate_starting_entry.configure(state='readonly')
-# max_mutation_rate_entry.configure(state='readonly')
-# min_mutation_rate_entry.configure(state='readonly')
-# max_iterations_entry.configure(state='readonly')
-# elitism_checkbox.configure(state='disabled')
-
-
+word_hyper_param_entry.configure(state='readonly')
+letter_hyper_param_entry.configure(state='readonly')
+pair_letters_hyper_param_entry.configure(state='readonly')
+hyper_letter_correct_entry.configure(state='readonly')
+hyper_pair_letters_correct_entry.configure(state='readonly')
+mutation_trashold_entry.configure(state='readonly')
+increase_mutation_entry.configure(state='readonly')
+decrease_mutation_entry.configure(state='readonly')
+improvement_rates_queue_length_entry.configure(state='readonly')
+N_entry.configure(state='readonly')
+population_size_entry.configure(state='readonly')
+mutation_rate_starting_entry.configure(state='readonly')
+max_mutation_rate_entry.configure(state='readonly')
+min_mutation_rate_entry.configure(state='readonly')
+max_iterations_entry.configure(state='readonly')
+elitism_checkbox.configure(state='disabled')
 
 run_button = tk.Button(root, text="Run", command=run_genetic_algorithm)
 run_button.pack()
