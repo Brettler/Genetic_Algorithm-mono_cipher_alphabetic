@@ -293,7 +293,7 @@ def genetic_algorithm(q, hyper_params, fig, canvas, cipher_text,
                       max_iterations=150,
                       elitism=True,
                       fitness_stop_threshold=15):
-    q.put(f"Remember to calculate accuracy you need to have a file exactly the same format as the 'perm.txt' file.")
+    q.put(f"Remember: to calculate the accuracy, you must have a file in the same format as the 'perm.txt' file.")
     ax = fig.add_subplot(111)
     # Generate initial population of solutions (= permutation of letters)
     population = [init_generate_solution() for _ in range(population_size)]
