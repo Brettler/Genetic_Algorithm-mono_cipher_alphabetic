@@ -1,0 +1,12 @@
+In this document, we will provide a detailed explanation of how to execute the program.
+Please note that the program is only compatible with Windows operating systems.
+
+There are two options for running the program:
+Option 1:
+Please be aware that your antivirus software may issue a warning that the file contains a virus.
+Rest assured, the only "virus" contained within the file is Darwin (we prefer and love Lamarck).
+1. To execute the program, double-click on the 'gui.exe' file.
+2. The program should now be running. For more information about the program itself, please refer to the accompanying PDF file.
+
+Here is a short YouTube video where we discuss everything you need to know to use the program and get the most out of it:
+https://youtu.be/yKeWFUyko6Y
