@@ -1,4 +1,4 @@
-In this document, we will provide a detailed explanation of how to execute the program.
+Here we provide a detailed explaination on how to execute our program.
 Please note that the program is only compatible with Windows operating systems.
 Please be aware that your antivirus software may issue a warning that the file contains a virus.
 Rest assured, the only "virus" contained within the file is Darwin (we prefer and love Lamarck).
