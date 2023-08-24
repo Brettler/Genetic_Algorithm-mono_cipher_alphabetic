@@ -15,7 +15,3 @@ Rest assured, the only "virus" contained within the file is Darwin (we prefer an
 5. Choose your favorite optimization (our recommendation: Lamarck).
 6. Press 'Run' and enjoy the show.
 7. Once the algorithm comes to a stop and outputs the results, you may run it again as you choose.
-
-For more information about the program itself, please refer to the accompanying PDF file.
-Additionally, we made a short YouTube tutorial demonstrating the use of the program: 
-https://youtu.be/yKeWFUyko6Y
